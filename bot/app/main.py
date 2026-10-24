@@ -1,9 +1,11 @@
+import asyncio
 import logging
 
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramRetryAfter
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from app.config import settings
@@ -25,11 +27,21 @@ async def unavailable(_: web.Request) -> web.Response:
 
 async def on_startup(bot: Bot, dispatcher: Dispatcher) -> None:
     if settings.telegram_webhook_url:
-        await bot.set_webhook(
-            settings.telegram_webhook_url,
-            secret_token=settings.telegram_webhook_secret,
-            allowed_updates=dispatcher.resolve_used_update_types(),
-        )
+        webhook = await bot.get_webhook_info()
+        if webhook.url == settings.telegram_webhook_url:
+            return
+
+        try:
+            await bot.set_webhook(
+                settings.telegram_webhook_url,
+                secret_token=settings.telegram_webhook_secret,
+                allowed_updates=dispatcher.resolve_used_update_types(),
+            )
+        except TelegramRetryAfter as error:
+            await asyncio.sleep(error.retry_after)
+            webhook = await bot.get_webhook_info()
+            if webhook.url != settings.telegram_webhook_url:
+                raise
 
 
 async def on_shutdown(bot: Bot) -> None:
