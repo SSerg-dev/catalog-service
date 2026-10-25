@@ -22,7 +22,7 @@ def test_serialize_product() -> None:
 
     assert response.id == 7
     assert response.title == "Тестовый товар"
-    assert response.image_url.endswith("/api/products/7/image")
+    assert response.image_url == "/api/products/7/image"
 
 
 def test_admin_token_validation() -> None:

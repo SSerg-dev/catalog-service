@@ -23,7 +23,7 @@ def serialize(product: Product) -> ProductResponse:
     return ProductResponse(
         id=product.id,
         title=product.title,
-        image_url=f"{settings.public_api_url.rstrip('/')}/api/products/{product.id}/image",
+        image_url=f"/api/products/{product.id}/image",
         created_at=product.created_at,
     )
 
